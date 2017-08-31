@@ -75,10 +75,14 @@ public class AROverlayView  extends View {
             // if z > 0, the point will display on the opposite
             if (cameraCoordinateVector[2] < 0) {
                 float x  = (0.5f + cameraCoordinateVector[0]/cameraCoordinateVector[3]) * canvas.getWidth();
-                float y = (0.5f - cameraCoordinateVector[1]/cameraCoordinateVector[3]) * canvas.getHeight();
+                float y = (0.5f - cameraCoordinateVector[1]/cameraCoordinateVector[3]) * canvas.getHeight();x
 
                 canvas.drawCircle(x, y, radius, paint);
-                canvas.drawText(arPoints.get(i).getName(), x - (30 * arPoints.get(i).getName().length() / 2), y - 80, paint);
+                String distance = String.valueOf(currentLocation.distanceTo(arPoints.get(i).getLocation()));
+                canvas.drawText(arPoints.get(i).getName(),
+                        x - (30 * arPoints.get(i).getName().length() / 2), y - 160, paint);
+                canvas.drawText(distance,
+                        x - (30 * distance.length() / 2), y - 60, paint);
             }
         }
     }
