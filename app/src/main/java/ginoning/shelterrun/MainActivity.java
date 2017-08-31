@@ -61,9 +61,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         arOverlayView = new AROverlayView(this);
 
         FirebaseInstanceId.getInstance().getToken();
-
         String token = FirebaseInstanceId.getInstance().getToken();
-        Log.d("FCM_Token", token);
+        Log.d("FCM_token: ", token);
     }
 
     @Override
