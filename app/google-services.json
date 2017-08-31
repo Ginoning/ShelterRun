@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "374459866020",
+    "firebase_url": "https://shelterrun-26f9c.firebaseio.com",
+    "project_id": "shelterrun-26f9c",
+    "storage_bucket": "shelterrun-26f9c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374459866020:android:219487e7393e457e",
+        "android_client_info": {
+          "package_name": "ginoning.shelterrun"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "374459866020-h251sfvlhl5vjdduucpl5143p0g6ttg5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ginoning.shelterrun",
+            "certificate_hash": "84a11431fd002ecb209f7d96eda1cb1cba005ae0"
+          }
+        },
+        {
+          "client_id": "374459866020-r8vlmirv3ca3vnr0a8qohdl1s48s7cv9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGN2bt4BrC6tlJRxZ28tD7PDWcO0K8NG0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "374459866020-r8vlmirv3ca3vnr0a8qohdl1s48s7cv9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -22,6 +22,8 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
 import ginoning.shelterrun.model.ARCamera;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
@@ -57,6 +59,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         tvCurrentLocation = (TextView) findViewById(R.id.tv_current_location);
         arOverlayView = new AROverlayView(this);
+
+        FirebaseInstanceId.getInstance().getToken();
+
+        String token = FirebaseInstanceId.getInstance().getToken();
+        Log.d("FCM_Token", token);
     }
 
     @Override
