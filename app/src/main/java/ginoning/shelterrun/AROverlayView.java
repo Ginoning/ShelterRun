@@ -6,9 +6,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.opengl.Matrix;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -23,11 +26,14 @@ import ginoning.shelterrun.helper.LocationHelper;
 
 public class AROverlayView  extends View {
     public static final int MAX_SHELTER_NUM = 3;
+    public static final double TOUCH_DIAMETER = 50;
     Context context;
     private float[] rotatedProjectionMatrix = new float[16];
     private Location currentLocation;
     private List<ARPoint> arPoints;
     private Bitmap rightTriangleBitmap, leftTriangleBitmap, shelterBitmap;
+    private List<PointF> displayPointF = new ArrayList<>();;
+    private List<ARPoint> dispalyARPoint = new ArrayList<>();
 
     public AROverlayView(Context context) {
         super(context);
@@ -91,32 +97,27 @@ public class AROverlayView  extends View {
         shelterBitmap = resizeBitmapImage(shelterBitmap, 100);
     }
 
-    private void sidePointDraw(Canvas canvas, Paint paint, ArrayList<ARPoint> list, boolean isLeft){
-        if(list==null) return;
-        int imageHeight = leftTriangleBitmap.getHeight();
-        int imageWeight = leftTriangleBitmap.getWidth();
-        int count = Math.min(list.size(), MAX_SHELTER_NUM);
-        float base = canvas.getHeight()/2-((imageHeight+50)*count/2);
-        if(base<15)
-            base = 15;
-        for(int j=0 ; j<count ; j++) {
-            float[] distance = new float[3];
-            Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(), list.get(j).getLocation().getLatitude(), list.get(j).getLocation().getLongitude(),distance);
-            String distanceString = String.format("%.1f",distance[0]);
+    private double PointFDistance(PointF start, PointF end){
+        return Math.sqrt(Math.pow(start.x-end.x, 2)+Math.pow(start.y-start.y, 2));
+    }
 
-            float y = base + j * (imageHeight+50);
-            float x;
-            if(isLeft){
-                x= imageWeight + 10;
-                canvas.drawBitmap(leftTriangleBitmap, 0, y, paint);
-            } else {
-                x = canvas.getWidth() - (55 * list.get(j).getName().length()) - rightTriangleBitmap.getWidth() - 10;
-                canvas.drawBitmap(rightTriangleBitmap, canvas.getWidth()-imageWeight, y, paint);
+
+    public boolean onTouchEvent(MotionEvent ev) {
+        final int action = ev.getAction();
+        switch (action & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN: {
+                final float x = ev.getX();
+                final float y = ev.getY();
+                if(displayPointF==null) break;
+                for(int i=0 ; i<displayPointF.size(); i++){
+                    if(PointFDistance(new PointF(x,y), displayPointF.get(i))<=TOUCH_DIAMETER){
+                        Log.e("touchShelter", dispalyARPoint.get(i).getName());
+                    }
+                }
+                break;
             }
-
-            canvas.drawText(list.get(j).getName(), x, y + imageHeight / 2 - 10, paint);
-            canvas.drawText(distanceString, x, y + imageHeight / 2 + 50, paint);
         }
+        return true;
     }
 
     @Override
@@ -129,16 +130,14 @@ public class AROverlayView  extends View {
         if(rightTriangleBitmap==null || leftTriangleBitmap==null)
             getBitmapImage();
 
-        ArrayList<ARPoint> leftPoint = new ArrayList<>();
-        ArrayList<ARPoint> rightPoint = new ArrayList<>();
-
-        final int radius = 30;
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.WHITE);
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
         paint.setTextSize(60);
         int count =Math.min(arPoints.size(),MAX_SHELTER_NUM);
+        displayPointF.clear();
+        dispalyARPoint.clear();
         for (int i = 0; arPoints!=null && i < count ; i ++) {
             arPoints.get(i).getLocation().setAltitude(currentLocation.getAltitude());
             float[] currentLocationInECEF = LocationHelper.WSG84toECEF(currentLocation);
@@ -151,23 +150,37 @@ public class AROverlayView  extends View {
             // cameraCoordinateVector[2] is z, that always less than 0 to display on right position
             // if z > 0, the point will display on the opposite
             if (cameraCoordinateVector[2] < 0) {
-                float x  = (0.5f + cameraCoordinateVector[0]/cameraCoordinateVector[3]) * canvas.getWidth();
-                float y = (0.5f - cameraCoordinateVector[1]/cameraCoordinateVector[3]) * canvas.getHeight() - (300*(count%2-i));
-                if(x>canvas.getWidth()) {
-                    rightPoint.add(arPoints.get(i));
+                float[] distance = new float[3];
+                Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(), arPoints.get(i).getLocation().getLatitude(), arPoints.get(i).getLocation().getLongitude(), distance);
+                String distanceString = String.format("%.1f", distance[0]);
+
+                float x = (0.5f + cameraCoordinateVector[0] / cameraCoordinateVector[3]) * canvas.getWidth();
+                float y = (0.5f - cameraCoordinateVector[1] / cameraCoordinateVector[3]) * canvas.getHeight() - (300 * (i-count % 2));
+
+                if (x > canvas.getWidth()) {
+                    x = canvas.getWidth() - (55 * arPoints.get(i).getName().length()) - rightTriangleBitmap.getWidth() - 10;
+                    y = canvas.getHeight()/2 - (300 * (i-count % 2));
+                    canvas.drawBitmap(rightTriangleBitmap, canvas.getWidth() - rightTriangleBitmap.getWidth(), y, paint);
+
+                    canvas.drawText(arPoints.get(i).getName(), x, y + leftTriangleBitmap.getHeight() / 2 - 10, paint);
+                    canvas.drawText(distanceString, x, y + rightTriangleBitmap.getHeight() / 2 + 50, paint);
                 }
-                else if(x<0){
-                    leftPoint.add(arPoints.get(i));
+                else if(x<0) {
+                    x = leftTriangleBitmap.getWidth() + 10;
+                    y = canvas.getHeight()/2 - (300 * (i-count % 2));
+                    canvas.drawBitmap(leftTriangleBitmap, 0, y, paint);
+
+                    canvas.drawText(arPoints.get(i).getName(), x, y + leftTriangleBitmap.getHeight() / 2 - 10, paint);
+                    canvas.drawText(distanceString, x, y + rightTriangleBitmap.getHeight() / 2 + 50, paint);
                 }
                 else {
+                    displayPointF.add(new PointF(x+shelterBitmap.getWidth(), y+shelterBitmap.getHeight()/2));
+                    dispalyARPoint.add(arPoints.get(i));
                     canvas.drawBitmap(shelterBitmap, x+shelterBitmap.getWidth()/2, y, paint);
-                    String distance = String.valueOf(currentLocation.distanceTo(arPoints.get(i).getLocation()));
                     canvas.drawText(arPoints.get(i).getName(), x - (30 * arPoints.get(i).getName().length() / 2), y - 100, paint);
-                    canvas.drawText(distance, x - (15 * distance.length() / 2), y - 30, paint);
+                    canvas.drawText(distanceString, x - (15 * distanceString.length() / 2), y - 30, paint);
                 }
             }
         }
-        sidePointDraw(canvas, paint, leftPoint, true);
-        sidePointDraw(canvas, paint, rightPoint, false);
     }
 }
