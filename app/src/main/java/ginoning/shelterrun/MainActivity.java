@@ -59,10 +59,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         tvCurrentLocation = (TextView) findViewById(R.id.tv_current_location);
         arOverlayView = new AROverlayView(this);
-
-        FirebaseInstanceId.getInstance().getToken();
-        String token = FirebaseInstanceId.getInstance().getToken();
-        Log.d("FCM_token: ", token);
     }
 
     @Override
