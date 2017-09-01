@@ -18,8 +18,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,11 +30,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import ginoning.shelterrun.model.ARCamera;
+import ginoning.shelterrun.model.SMSSender;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener, OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener, OnMapReadyCallback, View.OnClickListener {
 
     final static String TAG = "ARActivity";
     private SurfaceView surfaceView;
@@ -41,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Camera camera;
     private ARCamera arCamera;
     private TextView tvCurrentLocation;
+    private GoogleMap gMap;
+    private ImageButton alertBtn, mapBtn;
+    private boolean mapVisible=false;
 
     private SensorManager sensorManager;
     private final static int REQUEST_CAMERA_PERMISSIONS_CODE = 11;
@@ -63,8 +68,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
         cameraContainerLayout = (FrameLayout) findViewById(R.id.camera_container_layout);
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
-        tvCurrentLocation = (TextView) findViewById(R.id.tv_current_location);
         arOverlayView = new AROverlayView(this);
+        alertBtn = (ImageButton)findViewById(R.id.alertBtn);
+        alertBtn.setOnClickListener(this);
+        mapBtn = (ImageButton)findViewById(R.id.mapBtn);
+        mapBtn.setOnClickListener(this);
 
         FragmentManager fragmentManager = getFragmentManager();
         MapFragment mapFragment = (MapFragment)fragmentManager.findFragmentById(R.id.maps);
@@ -73,22 +81,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onMapReady(final GoogleMap map) {
-
+        gMap = map;
         LatLng SEOUL = new LatLng(37.56, 126.97);
-
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(SEOUL);
-        markerOptions.title("서울");
-        markerOptions.snippet("한국의 수도");
-        map.addMarker(markerOptions);
-
         map.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
         map.animateCamera(CameraUpdateFactory.zoomTo(10));
+
+        FrameLayout mapLayout = (FrameLayout) findViewById(R.id.maps);
+        mapLayout.animate().translationY(900).translationX(900).setDuration(0);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        requestSMSSendPermission();
         requestLocationPermission();
         requestCameraPermission();
         registerSensors();
@@ -119,6 +124,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    public void requestSMSSendPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                this.checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            this.requestPermissions(new String[]{Manifest.permission.SEND_SMS}, REQUEST_LOCATION_PERMISSIONS_CODE);
+        }
+    }
     public void initAROverlayView() {
         if (arOverlayView.getParent() != null) {
             ((ViewGroup) arOverlayView.getParent()).removeView(arOverlayView);
@@ -249,21 +260,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void updateLatestLocation() {
-        if(location==null)
-            tvCurrentLocation.setText("null");
-        else
-            Log.e("update location",String.valueOf(location.getLatitude()));
-
         if (arOverlayView !=null && location!=null) {
-            arOverlayView.updateCurrentLocation(location);
-            tvCurrentLocation.setText(String.format("lat: %s \nlon: %s \naltitude: %s \n",
-                    location.getLatitude(), location.getLongitude(), location.getAltitude()));
+            arOverlayView.updateCurrentLocation(location, gMap);
         }
     }
 
     @Override
     public void onLocationChanged(Location loc) {
         location = loc;
+        gMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude())));
+        gMap.animateCamera(CameraUpdateFactory.zoomTo(12));
         updateLatestLocation();
     }
 
@@ -280,5 +286,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onProviderDisabled(String s) {
 
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.alertBtn:
+                SMSSender sms = new SMSSender(this);
+                sms.sendMessage("위도 : "+String.valueOf(location.getLatitude())+"\n경도 : "+String.valueOf(location.getLongitude())+"\n재난상황으로 위급상황에 처했습니다.\n구조 부탁드립니다.");
+                break;
+            case R.id.mapBtn:
+                FrameLayout mapLayout = (FrameLayout) findViewById(R.id.maps);
+                if(mapVisible){
+                    mapLayout.animate().translationY(900).translationX(900).setDuration(300);
+                    mapVisible = false;
+                } else{
+                    mapLayout.animate().translationY(-300).translationX(000).setDuration(300);
+                    mapVisible = true;
+                }
+
+                break;
+        }
     }
 }

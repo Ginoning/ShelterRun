@@ -14,6 +14,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +38,7 @@ public class AROverlayView  extends View {
     private Bitmap rightTriangleBitmap, leftTriangleBitmap, shelterBitmap;
     private List<PointF> displayPointF = new ArrayList<>();;
     private List<ARPoint> dispalyARPoint = new ArrayList<>();
+    private GoogleMap gMap;
 
     public AROverlayView(Context context) {
         super(context);
@@ -45,11 +50,20 @@ public class AROverlayView  extends View {
         this.invalidate();
     }
 
-    public void updateCurrentLocation(Location currentLocation){
+    public void updateCurrentLocation(Location currentLocation, GoogleMap gm){
         this.currentLocation = currentLocation;
+        gMap = gm;
 
-        if(arPoints==null)
+        if(arPoints==null){
             arPoints = LoadJSONHelper.loadJSONFromAssert(context, currentLocation);
+        }
+        if(gm!=null && arPoints!=null){
+            for(int i=0 ; i<Math.min(MAX_SHELTER_NUM, arPoints.size()) ; i++){
+                gMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(arPoints.get(i).getLocation().getLatitude(), arPoints.get(i).getLocation().getLongitude()))
+                        .title(arPoints.get(i).getName()));
+            }
+        }
         this.invalidate();
     }
 
