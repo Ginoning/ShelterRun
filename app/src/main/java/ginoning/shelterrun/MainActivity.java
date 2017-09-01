@@ -1,6 +1,7 @@
 package ginoning.shelterrun;
 
 import android.Manifest;
+import android.app.FragmentManager;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Sensor;
@@ -22,11 +23,16 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import ginoning.shelterrun.model.ARCamera;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener, OnMapReadyCallback {
 
     final static String TAG = "ARActivity";
     private SurfaceView surfaceView;
@@ -59,6 +65,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         tvCurrentLocation = (TextView) findViewById(R.id.tv_current_location);
         arOverlayView = new AROverlayView(this);
+
+        FragmentManager fragmentManager = getFragmentManager();
+        MapFragment mapFragment = (MapFragment)fragmentManager.findFragmentById(R.id.maps);
+        mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(final GoogleMap map) {
+
+        LatLng SEOUL = new LatLng(37.56, 126.97);
+
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(SEOUL);
+        markerOptions.title("서울");
+        markerOptions.snippet("한국의 수도");
+        map.addMarker(markerOptions);
+
+        map.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
+        map.animateCamera(CameraUpdateFactory.zoomTo(10));
     }
 
     @Override

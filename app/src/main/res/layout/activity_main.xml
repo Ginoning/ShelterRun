@@ -6,17 +6,27 @@ android:layout_width="match_parent"
 android:layout_height="match_parent"
 tools:context="ginoning.shelterrun.MainActivity">
 
-<FrameLayout
-    android:id="@+id/camera_container_layout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <SurfaceView
-        android:id="@+id/surface_view"
+    <FrameLayout
+        android:id="@+id/camera_container_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</FrameLayout>
+        android:layout_height="match_parent">
 
-<TextView
+        <SurfaceView
+            android:id="@+id/surface_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </FrameLayout>
+
+
+    <fragment
+        android:id="@+id/maps"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="bottom|right" />
+
+    <TextView
     android:id="@+id/tv_current_location"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
